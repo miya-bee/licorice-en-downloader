@@ -1,0 +1,16 @@
+name: 機能・対応機種の要望
+description: 追加したい機能や対応機種について提案します。
+title: "[要望] "
+body:
+  - type: textarea
+    id: request
+    attributes:
+      label: 希望する機能・機種と用途
+      description: 解決したいこと、機種名、利用場面を記入してください。
+    validations:
+      required: true
+  - type: textarea
+    id: references
+    attributes:
+      label: 参考情報
+      description: 公式配布ページなどがあれば記入してください。個体IDや認証情報は貼り付けないでください。

@@ -1,0 +1,22 @@
+Licorice EN Downloader v0.1.1（開発版）
+
+このZIPをすべて展開してから LicoriceENDownloader.exe を起動してください。
+Pythonのインストールは必要ありません。設定はEXEと同じフォルダへ保存します。
+
+1. 起動後、公式APIから取得した配布情報と保存先を確認します。
+2. 「BINをダウンロード」を押します。
+3. 「ダウンロード・検証完了」を確認します。
+4. 「保存先を開く」から、検証済みのBINを確認します。
+
+詳しい説明は docs/index.html またはアプリの「マニュアル・導入手順」から開けます。
+
+Rescue OSの入手先（作者Eさんの配布記事）：
+https://note.com/ample_zephyr2723/n/necd67d1bccb3
+記事内のダウンロード欄を確認してください。準備の説明はマニュアル第5章です。
+
+対象：X4 Pro / Licorice EN版
+非公式ツールです。端末の書き込み・リージョン設定の変更は行いません。
+本アプリ出力のBINについて、Rescue OSからの実機導入は未確認です。
+アプリ本体はMITライセンスで公開しています。LICENSEを確認してください。
+配布ページ：https://github.com/miya-bee/licorice-en-downloader/releases
+オンラインマニュアル：https://miya-bee.github.io/licorice-en-downloader/

@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 操作マニュアル
+    url: https://miya-bee.github.io/licorice-en-downloader/
+    about: 操作手順、Rescue OSの入手先、エラー時の確認事項を参照できます。

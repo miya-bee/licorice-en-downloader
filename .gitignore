@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+.venv/
+build/
+dist/
+.dev-validation/
+settings*.json
+downloads/
+logs/
+*.bin
+*.xota
+*.spec

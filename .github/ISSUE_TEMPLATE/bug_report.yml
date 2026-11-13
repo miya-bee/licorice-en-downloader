@@ -1,0 +1,22 @@
+name: 不具合の報告
+description: 起動・照会・取得・保存などの問題を報告します。
+title: "[不具合] "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: 起きたこと・再現手順
+      description: 実行した操作、期待した結果、実際の結果を記入してください。
+    validations:
+      required: true
+  - type: textarea
+    id: report
+    attributes:
+      label: アプリの報告用情報
+      description: 「詳細・報告用情報」からコピーし、内容を確認して貼り付けてください。個人のパスや端末バックアップは不要です。
+      render: text
+  - type: input
+    id: windows
+    attributes:
+      label: Windowsのバージョン・表示倍率
+      placeholder: Windows 11 / 125%
