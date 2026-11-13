@@ -1,6 +1,6 @@
 # Licorice EN Downloader
 
-X4 Pro用のLicorice EN版を公式Global更新APIから取得し、Rescue OSで導入するアプリBINとして保存する、Windows用の非公式ツールです。ソースコードはMITライセンスで公開します。
+XTEINK製電子書籍リーダー X4 Pro用のLicorice EN版を公式Global更新APIから取得し、Rescue OSで導入するアプリBINとして保存する、Windows用の非公式ツールです。ソースコードはMITライセンスで公開します。
 
 **現在は開発版 v0.1.1です。** 公式配布物の取得・抽出・検証・保存は確認していますが、出力BINの実機導入・起動・言語選択は未検証です。
 
