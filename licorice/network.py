@@ -12,6 +12,7 @@ from urllib.request import HTTPRedirectHandler, Request, build_opener
 
 from . import __version__
 from .core import AppError, Cancelled, Device, Release, X4_PRO, validate_url
+from .i18n import tr
 
 
 def check_cancel(cancel: threading.Event) -> None:
@@ -45,17 +46,17 @@ class Client:
         def checkpoint():
             check_cancel(cancel)
             if time.monotonic() >= deadline:
-                raise AppError("timeout", "転送に時間がかかりすぎています。接続を確認して再試行してください。")
+                raise AppError("timeout", tr("転送に時間がかかりすぎています。接続を確認して再試行してください。"))
         for attempt in range(self.attempts):
             checkpoint()
             try:
                 with self.open(url, host) as response:
                     checkpoint()
                     if response.status != 200:
-                        raise AppError("network", "公式配布先が正常な応答を返しませんでした。")
+                        raise AppError("network", tr("公式配布先が正常な応答を返しませんでした。"))
                     if expected is not None and response.headers.get("Content-Length"):
                         if int(response.headers["Content-Length"]) != expected:
-                            raise AppError("size", "配布先が示す転送サイズと照会結果が一致しません。再確認してください。")
+                            raise AppError("size", tr("配布先が示す転送サイズと照会結果が一致しません。再確認してください。"))
                     chunks, total = [], 0
                     while True:
                         checkpoint()
@@ -69,11 +70,11 @@ class Client:
                         chunks.append(block)
                         total += len(block)
                         if total > limit:
-                            raise AppError("size", "受信データが許容サイズを超えています。")
+                            raise AppError("size", tr("受信データが許容サイズを超えています。"))
                         if progress:
                             progress(total, expected or 0)
                     if expected is not None and total != expected:
-                        raise AppError("size", "ダウンロードが途中で切れました。もう一度お試しください。")
+                        raise AppError("size", tr("ダウンロードが途中で切れました。もう一度お試しください。"))
                     check_cancel(cancel)
                     return b"".join(chunks)
             except HTTPError as exc:
@@ -82,16 +83,16 @@ class Client:
                 if exc.code in (408, 429, 500, 502, 503, 504) and attempt + 1 < self.attempts:
                     pass
                 else:
-                    raise AppError("http", f"公式配布先への接続に失敗しました（HTTP {exc.code}）。配布情報を再確認してください。") from None
+                    raise AppError("http", tr("公式配布先への接続に失敗しました（HTTP {code}）。配布情報を再確認してください。", code=exc.code)) from None
             except (URLError, TimeoutError, socket.timeout, ConnectionError, OSError, HTTPException):
                 check_cancel(cancel)
                 if attempt + 1 == self.attempts:
-                    raise AppError("network", "通信に失敗しました。インターネット接続を確認して再試行してください。") from None
+                    raise AppError("network", tr("通信に失敗しました。インターネット接続を確認して再試行してください。")) from None
             except ValueError:
-                raise AppError("network", "配布先の応答ヘッダーが不正です。") from None
+                raise AppError("network", tr("配布先の応答ヘッダーが不正です。")) from None
             if cancel.wait(1):
                 raise Cancelled()
-        raise AppError("network", "通信を完了できませんでした。")
+        raise AppError("network", tr("通信を完了できませんでした。"))
 
     def check(self, cancel, device: Device = X4_PRO) -> Release | None:
         query = urlencode({"device_type": device.model, "current_version": "V0.0.0",
@@ -101,7 +102,7 @@ class Client:
         try:
             payload = json.loads(data)
         except (ValueError, UnicodeError, RecursionError):
-            raise AppError("api", "公式APIの応答をJSONとして読み取れません。") from None
+            raise AppError("api", tr("公式APIの応答をJSONとして読み取れません。")) from None
         return Release.parse(payload, device)
 
     def download(self, release: Release, cancel, progress) -> bytes:

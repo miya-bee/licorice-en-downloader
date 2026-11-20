@@ -2,6 +2,9 @@ Licorice EN Downloader v0.1.1（開発版）
 
 このZIPをすべて展開してから LicoriceENDownloader.exe を起動してください。
 Pythonのインストールは必要ありません。設定はEXEと同じフォルダへ保存します。
+画面はWindowsの表示言語に合わせて日本語または英語で表示します。
+変更する場合は「設定」→「表示言語 / Language」を選び、アプリを再起動してください。
+（English: see README.txt）
 
 1. 起動後、公式APIから取得した配布情報と保存先を確認します。
 2. 「BINをダウンロード」を押します。

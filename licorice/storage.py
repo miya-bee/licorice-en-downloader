@@ -12,6 +12,7 @@ import tempfile
 import threading
 
 from .core import AppError, Cancelled
+from .i18n import LANGUAGES, tr
 
 
 def app_directory() -> Path:
@@ -42,9 +43,9 @@ def atomic_write(path: Path, data: bytes, overwrite: bool = False, *, cancel: th
             temporary.unlink()
         temporary = None
     except FileExistsError:
-        raise AppError("exists", "同名ファイルがあります。保存先と上書きの指定を確認してください。") from None
+        raise AppError("exists", tr("同名ファイルがあります。保存先と上書きの指定を確認してください。")) from None
     except OSError:
-        raise AppError("save", "ファイルを保存できません。空き容量・書き込み権限・ファイルが使用中でないか確認してください。") from None
+        raise AppError("save", tr("ファイルを保存できません。空き容量・書き込み権限・ファイルが使用中でないか確認してください。")) from None
     finally:
         if temporary:
             try:
@@ -75,6 +76,7 @@ class Settings:
     save_metadata: bool = False
     geometry: str = "920x830"
     protected: bool = False
+    language: str = "auto"
 
     def destination_path(self, base: Path) -> Path:
         path = Path(self.destination)
@@ -88,14 +90,14 @@ class Settings:
 
     def save(self, base: Path):
         if self.protected:
-            raise AppError("settings", "元の設定を安全に保管できないため、自動上書きを停止しています。")
+            raise AppError("settings", tr("元の設定を安全に保管できないため、自動上書きを停止しています。"))
         try:
             validate_destination(self.destination)
         except (ValueError, TypeError):
-            raise AppError("settings", "保存先の設定が不正です。保存先を選び直してください。") from None
+            raise AppError("settings", tr("保存先の設定が不正です。保存先を選び直してください。")) from None
         payload = {"schema_version": 1, "destination": self.destination,
                    "save_xota": self.save_xota, "save_metadata": self.save_metadata,
-                   "geometry": self.geometry}
+                   "geometry": self.geometry, "language": self.language}
         atomic_write(base / "settings.json", json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8"), True)
 
     @classmethod
@@ -105,10 +107,10 @@ class Settings:
             if not path.exists():
                 return cls(), ""
             if path.stat().st_size > 65536:
-                return cls(protected=True), "設定ファイルが大きすぎます。元の設定を保持し、自動上書きを停止しました。"
+                return cls(protected=True), tr("設定ファイルが大きすぎます。元の設定を保持し、自動上書きを停止しました。")
             payload = json.loads(path.read_text(encoding="utf-8"))
             if type(payload.get("schema_version")) is not int or payload["schema_version"] != 1:
-                return cls(protected=True), "この設定形式には未対応です。元の設定を保持し、自動上書きを停止しました。"
+                return cls(protected=True), tr("この設定形式には未対応です。元の設定を保持し、自動上書きを停止しました。")
             destination = payload["destination"]
             validate_destination(destination)
             for key in ("save_xota", "save_metadata"):
@@ -117,12 +119,17 @@ class Settings:
             geometry = str(payload.get("geometry", "920x830"))
             if not re.fullmatch(r"\d{3,4}x\d{3,4}(?:[+-]\d{1,5}[+-]\d{1,5})?", geometry):
                 geometry = "920x830"
-            return cls(destination, payload["save_xota"], payload["save_metadata"], geometry), ""
+            # Optional key added with English support; older files stay schema 1.
+            language = payload.get("language", "auto")
+            if language not in LANGUAGES:
+                language = "auto"
+            return cls(destination, payload["save_xota"], payload["save_metadata"], geometry,
+                       language=language), ""
         except (OSError, ValueError, KeyError, TypeError, AttributeError, RecursionError):
             # Copy instead of moving: an unreadable/unwritable file stays intact.
             try:
                 backup = base / f"settings.broken-{datetime.now():%Y%m%d-%H%M%S-%f}.json"
                 atomic_write(backup, path.read_bytes())
-                return cls(), "設定を読み取れませんでした。元の設定を別名で保管し、初期設定で起動しました。"
+                return cls(), tr("設定を読み取れませんでした。元の設定を別名で保管し、初期設定で起動しました。")
             except (OSError, AppError):
-                return cls(protected=True), "設定を読み取れませんでした。元の設定を保持し、自動上書きを停止しました。"
+                return cls(protected=True), tr("設定を読み取れませんでした。元の設定を保持し、自動上書きを停止しました。")

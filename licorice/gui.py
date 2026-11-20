@@ -1,4 +1,4 @@
-"""Japanese desktop UI. Only the main thread touches Tk widgets."""
+"""Japanese / English desktop UI. Only the main thread touches Tk widgets."""
 from __future__ import annotations
 
 from datetime import datetime
@@ -15,7 +15,9 @@ from tkinter import filedialog, messagebox, scrolledtext, ttk
 import webbrowser
 
 from . import APP_NAME, __version__
+from . import i18n
 from .core import AppError, Cancelled
+from .i18n import tr
 from .network import Client
 from .service import SaveOptions, acquire, output_paths
 from .storage import Settings, app_directory
@@ -24,12 +26,17 @@ from .storage import Settings, app_directory
 class Application:
     def __init__(self, root: tk.Tk, base: Path | None = None, auto_check: bool = True):
         self.root, self.base = root, base or app_directory()
+        # Load-time warnings use the auto language: a settings file that
+        # cannot be read also falls back to language "auto".
+        i18n.set_language("auto")
         self.settings, warning = Settings.load(self.base)
+        i18n.set_language(self.settings.language)
+        self.font = i18n.font_family()
         self.release = None
         self.saved_path = None
         self.busy = False
         self.closing = False
-        self.report = "まだ処理を実行していません。"
+        self.report = tr("まだ処理を実行していません。")
         self.events = queue.Queue()
         self.cancel = threading.Event()
         self.worker = None
@@ -45,12 +52,12 @@ class Application:
             handler.setFormatter(logging.Formatter("%(asctime)s %(message)s"))
             self.logger.addHandler(handler)
         except OSError:
-            warning = (warning + "\n" if warning else "") + "ログを保存できません。アプリフォルダの書き込み権限を確認してください。"
+            warning = (warning + "\n" if warning else "") + tr("ログを保存できません。アプリフォルダの書き込み権限を確認してください。")
         self._build()
         self.root.protocol("WM_DELETE_WINDOW", self.close)
         self.poll_timer = self.root.after(80, self._poll)
         if warning:
-            self.startup_timers.append(self.root.after(200, lambda: messagebox.showwarning("設定・保存の確認", warning, parent=root)))
+            self.startup_timers.append(self.root.after(200, lambda: messagebox.showwarning(tr("設定・保存の確認"), warning, parent=root)))
         if auto_check:
             self.startup_timers.append(self.root.after(350, self.check))
 
@@ -81,12 +88,12 @@ class Application:
             root.geometry("920x830")
         style = ttk.Style(root)
         style.theme_use("clam")
-        style.configure(".", font=("Yu Gothic UI", 10), background="#f2f5f1", foreground="#20372b")
+        style.configure(".", font=(self.font, 10), background="#f2f5f1", foreground="#20372b")
         style.configure("Card.TFrame", background="#ffffff")
         style.configure("Card.TLabel", background="#ffffff")
         style.configure("Muted.TLabel", foreground="#5a6b61", background="#ffffff")
-        style.configure("Heading.TLabel", font=("Yu Gothic UI", 12, "bold"), background="#ffffff")
-        style.configure("Version.TLabel", font=("Yu Gothic UI", 24, "bold"), background="#ffffff")
+        style.configure("Heading.TLabel", font=(self.font, 12, "bold"), background="#ffffff")
+        style.configure("Version.TLabel", font=(self.font, 24, "bold"), background="#ffffff")
         style.configure("TButton", padding=(12, 7))
         style.configure("Accent.TButton", background="#286148", foreground="#ffffff", padding=(16, 9))
         style.map("Accent.TButton", background=[("disabled", "#b9c5bd"), ("active", "#1b4c36")])
@@ -94,9 +101,9 @@ class Application:
         header = tk.Frame(root, bg="#193c2c", padx=28, pady=18)
         header.pack(fill="x")
         tk.Label(header, text=APP_NAME, bg="#193c2c", fg="#ffffff",
-                 font=("Yu Gothic UI", 21, "bold")).pack(anchor="w")
-        self.subtitle = tk.Label(header, text=f"X4 Pro用  ·  Licorice EN版を取得して、検証済みBINとして保存  /  アプリ v{__version__}",
-                 bg="#193c2c", fg="#c7ded0", font=("Yu Gothic UI", 10), anchor="w", justify="left")
+                 font=(self.font, 21, "bold")).pack(anchor="w")
+        self.subtitle = tk.Label(header, text=tr("X4 Pro用  ·  Licorice EN版を取得して、検証済みBINとして保存  /  アプリ v{version}", version=__version__),
+                 bg="#193c2c", fg="#c7ded0", font=(self.font, 10), anchor="w", justify="left")
         self.subtitle.pack(anchor="w", pady=(5, 0))
         # Primary actions stay outside the scrolling content. Small displays
         # and high DPI must never hide Download / Cancel / Settings / Manual.
@@ -119,59 +126,59 @@ class Application:
         card.pack(fill="x")
         row = ttk.Frame(card, style="Card.TFrame")
         row.pack(fill="x")
-        ttk.Label(row, text="公式APIが案内する配布FW", style="Heading.TLabel").pack(side="left")
-        self.check_button = ttk.Button(row, text="再確認", command=self.check)
+        ttk.Label(row, text=tr("公式APIが案内する配布FW"), style="Heading.TLabel").pack(side="left")
+        self.check_button = ttk.Button(row, text=tr("再確認"), command=self.check)
         self.check_button.pack(side="right")
-        self.version_var = tk.StringVar(value="配布情報を未確認")
+        self.version_var = tk.StringVar(value=tr("配布情報を未確認"))
         ttk.Label(card, textvariable=self.version_var, style="Version.TLabel").pack(anchor="w", pady=(3, 0))
-        self.release_var = tk.StringVar(value="対象：X4 Pro ／ EN版")
+        self.release_var = tk.StringVar(value=tr("対象：X4 Pro ／ EN版"))
         ttk.Label(card, textvariable=self.release_var, style="Muted.TLabel").pack(anchor="w")
-        self.time_var = tk.StringVar(value="確認日時：—")
+        self.time_var = tk.StringVar(value=tr("確認日時：—"))
         ttk.Label(card, textvariable=self.time_var, style="Muted.TLabel").pack(anchor="w", pady=(3, 0))
 
         changelog_card = ttk.Frame(body, style="Card.TFrame", padding=(18, 12))
         changelog_card.pack(fill="both", expand=True, pady=(12, 0))
-        ttk.Label(changelog_card, text="配布元の更新内容（原文）", style="Heading.TLabel").pack(anchor="w")
+        ttk.Label(changelog_card, text=tr("配布元の更新内容（原文）"), style="Heading.TLabel").pack(anchor="w")
         self.changelog = scrolledtext.ScrolledText(changelog_card, height=3, wrap="word", relief="flat",
-                                                  font=("Yu Gothic UI", 10), background="#ffffff",
+                                                  font=(self.font, 10), background="#ffffff",
                                                   foreground="#34493c", borderwidth=0, padx=2, pady=6)
         self.changelog.pack(fill="both", expand=True)
-        self._set_changelog("配布情報の取得後に表示します。")
+        self._set_changelog(tr("配布情報の取得後に表示します。"))
 
         saving = ttk.Frame(body, style="Card.TFrame", padding=(18, 12))
         saving.pack(fill="x", pady=(12, 0))
-        ttk.Label(saving, text="保存先", style="Heading.TLabel").pack(anchor="w")
+        ttk.Label(saving, text=tr("保存先"), style="Heading.TLabel").pack(anchor="w")
         row = ttk.Frame(saving, style="Card.TFrame")
         row.pack(fill="x", pady=(5, 0))
         self.destination_var = tk.StringVar(value=self._destination_display())
         self.destination_entry = ttk.Entry(row, textvariable=self.destination_var, state="readonly")
         self.destination_entry.pack(side="left", fill="x", expand=True, padx=(0, 8))
-        self.choose_button = ttk.Button(row, text="変更…", command=self.choose_destination)
+        self.choose_button = ttk.Button(row, text=tr("変更…"), command=self.choose_destination)
         self.choose_button.pack(side="right")
-        self.filename_var = tk.StringVar(value="保存するファイル：配布情報の取得後に表示")
+        self.filename_var = tk.StringVar(value=tr("保存するファイル：配布情報の取得後に表示"))
         ttk.Label(saving, textvariable=self.filename_var, style="Muted.TLabel").pack(anchor="w", pady=(5, 0))
 
-        self.status_var = tk.StringVar(value="配布情報を確認してください。")
+        self.status_var = tk.StringVar(value=tr("配布情報を確認してください。"))
         self.status_label = ttk.Label(actions, textvariable=self.status_var, wraplength=820)
         self.status_label.pack(anchor="w", pady=(0, 7))
         self.progress = ttk.Progressbar(actions, mode="determinate", maximum=100)
         self.progress.pack(fill="x")
         controls = ttk.Frame(actions)
         controls.pack(fill="x", pady=(12, 0))
-        self.download_button = ttk.Button(controls, text="BINをダウンロード", style="Accent.TButton", command=self.download, state="disabled")
+        self.download_button = ttk.Button(controls, text=tr("BINをダウンロード"), style="Accent.TButton", command=self.download, state="disabled")
         self.download_button.pack(side="left")
-        self.cancel_button = ttk.Button(controls, text="キャンセル", command=self.request_cancel, state="disabled")
+        self.cancel_button = ttk.Button(controls, text=tr("キャンセル"), command=self.request_cancel, state="disabled")
         self.cancel_button.pack(side="left", padx=8)
-        self.open_button = ttk.Button(controls, text="保存先を開く", command=self.open_destination, state="disabled")
+        self.open_button = ttk.Button(controls, text=tr("保存先を開く"), command=self.open_destination, state="disabled")
         self.open_button.pack(side="left")
-        self.settings_button = ttk.Button(controls, text="設定", command=self.show_settings)
+        self.settings_button = ttk.Button(controls, text=tr("設定"), command=self.show_settings)
         self.settings_button.pack(side="right")
         footer = ttk.Frame(actions)
         footer.pack(fill="x", pady=(10, 0))
-        ttk.Button(footer, text="マニュアル・導入手順", command=self.open_manual).pack(side="left")
-        ttk.Button(footer, text="詳細・報告用情報", command=self.show_report).pack(side="left", padx=8)
-        ttk.Button(footer, text="このアプリについて", command=self.about).pack(side="right")
-        self.notice_label = ttk.Label(actions, text="非公式ツールです。公式配布物からアプリBINを抽出します。端末への書き込みはRescue OSから行ってください。",
+        ttk.Button(footer, text=tr("マニュアル・導入手順"), command=self.open_manual).pack(side="left")
+        ttk.Button(footer, text=tr("詳細・報告用情報"), command=self.show_report).pack(side="left", padx=8)
+        ttk.Button(footer, text=tr("このアプリについて"), command=self.about).pack(side="right")
+        self.notice_label = ttk.Label(actions, text=tr("非公式ツールです。公式配布物からアプリBINを抽出します。端末への書き込みはRescue OSから行ってください。"),
                   wraplength=830, foreground="#617165")
         self.notice_label.pack(anchor="w", pady=(10, 0))
 
@@ -203,7 +210,7 @@ class Application:
             self.settings.save(self.base)
             return True
         except AppError:
-            messagebox.showwarning("設定を保存できません", "設定を保存できませんでした。この操作で選んだ内容は今回の起動中は有効です。\nアプリフォルダの書き込み権限を確認してください。", parent=self.root)
+            messagebox.showwarning(tr("設定を保存できません"), tr("設定を保存できませんでした。この操作で選んだ内容は今回の起動中は有効です。\nアプリフォルダの書き込み権限を確認してください。"), parent=self.root)
             return False
 
     def _start(self, operation, task):
@@ -223,7 +230,7 @@ class Application:
                 self.events.put(("error", (exc.code, str(exc))))
             except Exception as exc:
                 # Report only the exception type; raw messages may contain paths/URLs.
-                self.events.put(("error", ("unexpected", f"予期しないエラーが発生しました（{type(exc).__name__}）。報告用情報を確認してください。")))
+                self.events.put(("error", ("unexpected", tr("予期しないエラーが発生しました（{name}）。報告用情報を確認してください。", name=type(exc).__name__))))
             finally:
                 self.events.put(("idle", None))
         self.worker = threading.Thread(target=run, daemon=True)
@@ -233,26 +240,26 @@ class Application:
         if self.busy or self.closing:
             return
         if self.release:
-            self.time_var.set("前回確認時の情報です。再確認中…")
-        self.status_var.set("公式APIで配布情報を確認しています…")
+            self.time_var.set(tr("前回確認時の情報です。再確認中…"))
+        self.status_var.set(tr("公式APIで配布情報を確認しています…"))
         self._start("check", lambda: Client().check(self.cancel))
 
     def choose_destination(self):
         if self.busy:
             return
-        selected = filedialog.askdirectory(parent=self.root, title="FWの保存先を選択", mustexist=True)
+        selected = filedialog.askdirectory(parent=self.root, title=tr("FWの保存先を選択"), mustexist=True)
         if selected:
             try:
                 self.settings.set_destination(Path(selected), self.base)
             except OSError:
-                messagebox.showerror("保存先を選べません", "フォルダが存在し、利用できるか確認してください。", parent=self.root)
+                messagebox.showerror(tr("保存先を選べません"), tr("フォルダが存在し、利用できるか確認してください。"), parent=self.root)
                 return
             self.destination_var.set(self._destination_display())
             self._persist()
 
     def _destination_display(self):
         path = Path(self.settings.destination)
-        return str(path) if path.is_absolute() else f"アプリのフォルダ / {path.as_posix()}"
+        return str(path) if path.is_absolute() else tr("アプリのフォルダ / {path}", path=path.as_posix())
 
     def download(self):
         if self.busy or self.closing or not self.release:
@@ -262,10 +269,10 @@ class Application:
         try:
             conflicts = [p.name for p in output_paths(self.release, directory, options) if p.exists()]
         except OSError:
-            messagebox.showerror("保存先を確認できません", "保存先の権限と接続状態を確認してください。", parent=self.root)
+            messagebox.showerror(tr("保存先を確認できません"), tr("保存先の権限と接続状態を確認してください。"), parent=self.root)
             return
         if conflicts:
-            if not messagebox.askyesno("同名ファイルの確認", "以下のファイルを、検証成功後に上書きしますか？\n\n" + "\n".join(conflicts), parent=self.root):
+            if not messagebox.askyesno(tr("同名ファイルの確認"), tr("以下のファイルを、検証成功後に上書きしますか？\n\n") + "\n".join(conflicts), parent=self.root):
                 return
             options = SaveOptions(options.xota, options.metadata, True, frozenset(conflicts))
         release = self.release
@@ -275,7 +282,7 @@ class Application:
     def request_cancel(self):
         self.cancel.set()
         self.cancel_button.configure(state="disabled")
-        self.status_var.set("中止を要求しました。通信や保存の終了を待っています…")
+        self.status_var.set(tr("中止を要求しました。通信や保存の終了を待っています…"))
 
     def _poll(self):
         try:
@@ -284,7 +291,7 @@ class Application:
                 if kind == "progress":
                     current, total = value
                     self.progress.configure(value=100 * current / total if total else 0)
-                    self.status_var.set(f"ダウンロード中：{current / 1048576:.2f} / {total / 1048576:.2f} MiB")
+                    self.status_var.set(tr("ダウンロード中：{current:.2f} / {total:.2f} MiB", current=current / 1048576, total=total / 1048576))
                 elif kind == "stage":
                     self.status_var.set(value)
                     self.logger.info("stage %s", value)
@@ -293,8 +300,8 @@ class Application:
                     self.status_var.set(message)
                     self.progress.configure(value=0)
                     if self.release:
-                        self.time_var.set(f"前回確認時の情報：{self._local_time(self.release.checked)}")
-                    self.report = self._report_header() + f"\nエラー分類：{code}\n内容：{message}"
+                        self.time_var.set(tr("前回確認時の情報：{time}", time=self._local_time(self.release.checked)))
+                    self.report = self._report_header() + tr("\nエラー分類：{code}\n内容：{message}", code=code, message=message)
                     self.logger.info("error %s", code)
                 elif kind == "success":
                     operation, result = value
@@ -302,30 +309,31 @@ class Application:
                         self.release = result
                         if result:
                             self.version_var.set(result.version)
-                            self.release_var.set(f"X4 Pro ／ EN版　転送サイズ：{result.size:,} バイト")
-                            self.time_var.set(f"確認：{self._local_time(result.checked)}　配布日時（配布元表記）：{result.uploaded or '不明'}")
-                            self.filename_var.set(f"保存するファイル：{result.stem}.bin")
-                            self._set_changelog(result.changelog or "更新内容の記載はありません。")
-                            self.status_var.set("配布情報を確認しました。保存先を確認し、ダウンロードしてください。")
-                            self.report = self._report_header() + "\n配布情報の取得：成功"
+                            self.release_var.set(tr("X4 Pro ／ EN版　転送サイズ：{size:,} バイト", size=result.size))
+                            self.time_var.set(tr("確認：{checked}　配布日時（配布元表記）：{uploaded}",
+                               checked=self._local_time(result.checked), uploaded=result.uploaded or tr("不明")))
+                            self.filename_var.set(tr("保存するファイル：{name}", name=result.stem + ".bin"))
+                            self._set_changelog(result.changelog or tr("更新内容の記載はありません。"))
+                            self.status_var.set(tr("配布情報を確認しました。保存先を確認し、ダウンロードしてください。"))
+                            self.report = self._report_header() + tr("\n配布情報の取得：成功")
                         else:
-                            self.version_var.set("現在の配布物はありません")
-                            self.release_var.set("対象：X4 Pro ／ EN版")
-                            self.time_var.set("今回の照会では更新なしの応答でした。")
-                            self.filename_var.set("保存するファイル：—")
-                            self._set_changelog("現在取得できる配布物がありません。時間をおいて再確認してください。")
-                            self.status_var.set("公式APIから「更新なし」の応答がありました。")
-                            self.report = self._report_header() + "\n配布情報：更新なし"
+                            self.version_var.set(tr("現在の配布物はありません"))
+                            self.release_var.set(tr("対象：X4 Pro ／ EN版"))
+                            self.time_var.set(tr("今回の照会では更新なしの応答でした。"))
+                            self.filename_var.set(tr("保存するファイル：—"))
+                            self._set_changelog(tr("現在取得できる配布物がありません。時間をおいて再確認してください。"))
+                            self.status_var.set(tr("公式APIから「更新なし」の応答がありました。"))
+                            self.report = self._report_header() + tr("\n配布情報：更新なし")
                     else:
                         self.saved_path = result.path
                         self.progress.configure(value=100)
                         self.open_button.configure(state="normal")
-                        self.status_var.set("ダウンロード・検証完了。BINを保存しました。" + ("　追加保存に問題があります。詳細をご確認ください。" if result.warnings else ""))
-                        self.report = self._report_header() + "\nBIN保存：成功\nサイズ・SHA-256・ESPイメージ検証：成功\nSHA-256：" + result.verification["plain_sha256"]
+                        self.status_var.set(tr("ダウンロード・検証完了。BINを保存しました。") + (tr("　追加保存に問題があります。詳細をご確認ください。") if result.warnings else ""))
+                        self.report = self._report_header() + tr("\nBIN保存：成功\nサイズ・SHA-256・ESPイメージ検証：成功\nSHA-256：") + result.verification["plain_sha256"]
                         if result.warnings:
                             self.report += "\n" + "\n".join(result.warnings)
                             if not self.closing:
-                                messagebox.showwarning("追加保存について", "\n".join(result.warnings), parent=self.root)
+                                messagebox.showwarning(tr("追加保存について"), "\n".join(result.warnings), parent=self.root)
                         self.logger.info("BIN verified and saved")
                 elif kind == "idle":
                     self.busy = False
@@ -342,46 +350,65 @@ class Application:
 
     @staticmethod
     def _local_time(value):
-        return datetime.fromisoformat(value).astimezone().strftime("%Y/%m/%d %H:%M:%S %Z")
+        # %Z is the localized Windows zone name (e.g. Japanese on Japanese
+        # Windows), so the English UI shows a numeric offset instead.
+        pattern = "%Y-%m-%d %H:%M:%S UTC%z" if i18n.language() == "en" else "%Y/%m/%d %H:%M:%S %Z"
+        return datetime.fromisoformat(value).astimezone().strftime(pattern)
 
     def _report_header(self):
-        return f"{APP_NAME} v{__version__}\nOS：{platform.system()} {platform.release()} {platform.machine()}\n対象：X4 Pro / EN\nFW版：{self.release.version if self.release else '未取得'}"
+        return tr("{app} v{version}\nOS：{os}\n対象：X4 Pro / EN\nFW版：{firmware}", app=APP_NAME, version=__version__,
+                  os=f"{platform.system()} {platform.release()} {platform.machine()}",
+                  firmware=self.release.version if self.release else tr("未取得"))
 
     def show_settings(self):
         if self.busy:
             return
         dialog = tk.Toplevel(self.root)
-        dialog.title("保存設定")
+        dialog.title(tr("保存設定"))
         dialog.transient(self.root)
         dialog.resizable(False, False)
         frame = ttk.Frame(dialog, padding=24)
         frame.pack(fill="both", expand=True)
-        ttk.Label(frame, text="BINに加えて保存するファイル", font=("Yu Gothic UI", 12, "bold")).pack(anchor="w")
+        ttk.Label(frame, text=tr("BINに加えて保存するファイル"), font=(self.font, 12, "bold")).pack(anchor="w")
         xota = tk.BooleanVar(value=self.settings.save_xota)
         metadata = tk.BooleanVar(value=self.settings.save_metadata)
-        ttk.Checkbutton(frame, text="配布元のXOTAも保存する", variable=xota).pack(anchor="w", pady=(14, 6))
-        ttk.Checkbutton(frame, text="取得情報JSONも保存する", variable=metadata).pack(anchor="w")
-        ttk.Label(frame, text="設定はEXEと同じフォルダの settings.json に保存します。\n取得情報には機種・版・取得元・検証結果を記録します。", padding=(0, 16)).pack(anchor="w")
+        ttk.Checkbutton(frame, text=tr("配布元のXOTAも保存する"), variable=xota).pack(anchor="w", pady=(14, 6))
+        ttk.Checkbutton(frame, text=tr("取得情報JSONも保存する"), variable=metadata).pack(anchor="w")
+        ttk.Label(frame, text=tr("設定はEXEと同じフォルダの settings.json に保存します。\n取得情報には機種・版・取得元・検証結果を記録します。"), padding=(0, 16)).pack(anchor="w")
+        # Language names are shown in their own language so either user can find theirs.
+        choices = {"auto": tr("自動（Windowsの表示言語）"), "ja": "日本語", "en": "English"}
+        ttk.Label(frame, text="表示言語 / Language", font=(self.font, 12, "bold")).pack(anchor="w")
+        language = tk.StringVar(value=choices.get(self.settings.language, choices["auto"]))
+        self.language_box = ttk.Combobox(frame, textvariable=language, values=list(choices.values()),
+                                         state="readonly", width=30)
+        self.language_box.pack(anchor="w", pady=(8, 16))
         def save():
             self.settings.save_xota, self.settings.save_metadata = xota.get(), metadata.get()
+            selected = next(key for key, label in choices.items() if label == language.get())
+            changed = selected != self.settings.language
+            self.settings.language = selected
             self._persist()
             dialog.destroy()
-        ttk.Button(frame, text="設定を保存", command=save).pack(anchor="e")
+            if changed:
+                messagebox.showinfo("Language / 表示言語",
+                                    "表示言語の変更は、アプリの再起動後に反映されます。\n"
+                                    "The language change takes effect after you restart the app.", parent=self.root)
+        ttk.Button(frame, text=tr("設定を保存"), command=save).pack(anchor="e")
         dialog.grab_set()
 
     def show_report(self):
         report = self.report
         dialog = tk.Toplevel(self.root)
-        dialog.title("詳細・報告用情報")
+        dialog.title(tr("詳細・報告用情報"))
         dialog.transient(self.root)
-        text = scrolledtext.ScrolledText(dialog, width=82, height=17, wrap="word", font=("Yu Gothic UI", 10))
+        text = scrolledtext.ScrolledText(dialog, width=82, height=17, wrap="word", font=(self.font, 10))
         text.pack(fill="both", expand=True, padx=16, pady=16)
         text.insert("1.0", report)
         text.configure(state="disabled")
         def copy():
             self.root.clipboard_clear()
             self.root.clipboard_append(report)
-        ttk.Button(dialog, text="報告用情報をコピー", command=copy).pack(pady=(0, 16))
+        ttk.Button(dialog, text=tr("報告用情報をコピー"), command=copy).pack(pady=(0, 16))
 
     def open_destination(self):
         path = self.settings.destination_path(self.base)
@@ -393,24 +420,26 @@ class Application:
             else:
                 webbrowser.open(path.as_uri())
         except OSError:
-            messagebox.showerror("保存先を開けません", "保存先フォルダが存在するか確認してください。", parent=self.root)
+            messagebox.showerror(tr("保存先を開けません"), tr("保存先フォルダが存在するか確認してください。"), parent=self.root)
 
     def open_manual(self):
         # A bundled manual works before the GitHub Pages site is published.
-        manual = self.base / "docs" / "index.html"
+        relative = "docs/en/index.html" if i18n.language() == "en" else "docs/index.html"
+        manual = self.base / relative
         if manual.is_file():
             webbrowser.open(manual.as_uri())
         else:
-            messagebox.showinfo("マニュアル", "配布ZIPの docs/index.html を確認してください。", parent=self.root)
+            messagebox.showinfo(tr("マニュアル"), tr("配布ZIPの {path} を確認してください。", path=relative), parent=self.root)
 
     def about(self):
-        messagebox.showinfo("このアプリについて", f"{APP_NAME}\nアプリ v{__version__}\n\nX4 Pro用Licorice EN版ファームウェア取得ツール\nXTEINK非公式・開発版\n\nFWは公式Global配布先から取得します。\n本アプリは端末への書き込みや地域設定の変更を行いません。\n\n第三者表記：THIRD_PARTY_NOTICES.md", parent=self.root)
+        messagebox.showinfo(tr("このアプリについて"), tr("{app}\nアプリ v{version}\n\nX4 Pro用Licorice EN版ファームウェア取得ツール\nXTEINK非公式・開発版\n\nFWは公式Global配布先から取得します。\n本アプリは端末への書き込みや地域設定の変更を行いません。\n\n第三者表記：THIRD_PARTY_NOTICES.md",
+                               app=APP_NAME, version=__version__), parent=self.root)
 
     def close(self):
         if self.closing:
             return
         if self.busy:
-            if not messagebox.askyesno("処理中です", "処理の中止を要求して、終了を待ってから閉じますか？", parent=self.root):
+            if not messagebox.askyesno(tr("処理中です"), tr("処理の中止を要求して、終了を待ってから閉じますか？"), parent=self.root):
                 return
             self.closing = True
             self.request_cancel()
