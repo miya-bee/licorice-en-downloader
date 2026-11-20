@@ -107,10 +107,14 @@ class Release:
             if not isinstance(digest, str) or not re.fullmatch(r"[0-9a-fA-F]{64}", digest):
                 raise ValueError("sha256")
             # The current vendor API's checksum.sha256 describes the PLAINTEXT.
-            alternate = data.get("checksum", {}).get("sha256")
+            # Optional fields: JSON null means "absent", not a malformed manifest.
+            alternate = (data.get("checksum") or {}).get("sha256")
             if alternate and alternate.lower() != digest.lower():
                 raise ValueError("checksum conflict")
-            changelog, uploaded = data.get("change_log", ""), data.get("upload_time", "")
+            changelog = data.get("change_log")
+            uploaded = data.get("upload_time")
+            changelog = "" if changelog is None else changelog
+            uploaded = "" if uploaded is None else uploaded
             if not isinstance(changelog, str) or not isinstance(uploaded, str):
                 raise ValueError("text")
             changelog.encode("utf-8")

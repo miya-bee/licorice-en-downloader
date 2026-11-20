@@ -108,7 +108,8 @@ class Settings:
                 return cls(), ""
             if path.stat().st_size > 65536:
                 return cls(protected=True), tr("設定ファイルが大きすぎます。元の設定を保持し、自動上書きを停止しました。")
-            payload = json.loads(path.read_text(encoding="utf-8"))
+            # utf-8-sig: accept a BOM written by editors such as older Notepad.
+            payload = json.loads(path.read_text(encoding="utf-8-sig"))
             if type(payload.get("schema_version")) is not int or payload["schema_version"] != 1:
                 return cls(protected=True), tr("この設定形式には未対応です。元の設定を保持し、自動上書きを停止しました。")
             destination = payload["destination"]

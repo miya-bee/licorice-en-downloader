@@ -106,6 +106,25 @@ class ManifestTests(unittest.TestCase):
         with self.assertRaises(AppError):
             Release.parse(payload)
 
+    def test_null_or_missing_optional_fields_are_accepted(self):
+        for field in ("checksum", "change_log", "upload_time"):
+            for missing in (True, False):
+                payload, _, _, _ = sample()
+                if missing:
+                    del payload["data"][field]
+                else:
+                    payload["data"][field] = None
+                with self.subTest(field=field, missing=missing):
+                    release = Release.parse(payload)
+                    self.assertEqual((release.changelog, release.uploaded),
+                                     ("" if field == "change_log" else "Test",
+                                      "" if field == "upload_time" else "2026-11-12T06:14:23"))
+        for field, value in [("change_log", 1), ("upload_time", []), ("checksum", "x")]:
+            payload, _, _, _ = sample()
+            payload["data"][field] = value
+            with self.subTest(field=field, value=value), self.assertRaises(AppError):
+                Release.parse(payload)
+
     def test_no_update_distinguished_from_malformed(self):
         self.assertIsNone(Release.parse({"code": 0, "data": None, "message": "No update available"}))
         for payload in [{"code": 0}, {"code": 0, "data": None, "message": "Error"},
@@ -206,6 +225,17 @@ class StorageAndWorkflowTests(unittest.TestCase):
             self.assertEqual(len(backups), 1)
             settings.save(base)
             self.assertEqual(backups[0].read_bytes(), b"{broken")
+
+    def test_settings_with_utf8_bom_are_read(self):
+        with tempfile.TemporaryDirectory() as folder:
+            base = Path(folder)
+            text = json.dumps({"schema_version": 1, "destination": "FW", "save_xota": True,
+                               "save_metadata": False, "language": "en"})
+            (base / "settings.json").write_bytes(b"\xef\xbb\xbf" + text.encode("utf-8"))
+            settings, warning = Settings.load(base)
+            self.assertFalse(warning)
+            self.assertEqual((settings.destination, settings.save_xota, settings.language), ("FW", True, "en"))
+            self.assertEqual(list(base.glob("settings.broken-*.json")), [])
 
     def test_future_settings_not_destroyed(self):
         with tempfile.TemporaryDirectory() as folder:
