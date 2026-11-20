@@ -4,12 +4,12 @@
 
 XTEINK製電子書籍リーダー X4 Pro用のLicorice EN版を公式Global更新APIから取得し、Rescue OSで導入するアプリBINとして保存する、Windows用の非公式ツールです。ソースコードはMITライセンスで公開します。
 
-**現在は開発版 v0.2.0です。** 公式配布物の取得・抽出・検証・保存は確認していますが、出力BINの実機導入・起動・言語選択は未検証です。
+**現在は開発版 v0.2.1です。** 公式配布物の取得・抽出・検証・保存は確認していますが、出力BINの実機導入・起動・言語選択は未検証です。
 
 ## ダウンロード
 
-- [開発版 v0.2.0（Windows x64ポータブルZIP）](https://github.com/miya-bee/licorice-en-downloader/releases/download/v0.2.0/LicoriceENDownloader-v0.2.0-windows-x64-dev.zip)
-- [SHA-256](https://github.com/miya-bee/licorice-en-downloader/releases/download/v0.2.0/LicoriceENDownloader-v0.2.0-windows-x64-dev.zip.sha256)
+- [開発版 v0.2.1（Windows x64ポータブルZIP）](https://github.com/miya-bee/licorice-en-downloader/releases/download/v0.2.1/LicoriceENDownloader-v0.2.1-windows-x64-dev.zip)
+- [SHA-256](https://github.com/miya-bee/licorice-en-downloader/releases/download/v0.2.1/LicoriceENDownloader-v0.2.1-windows-x64-dev.zip.sha256)
 - [配布ページ・リリース情報](https://github.com/miya-bee/licorice-en-downloader/releases)
 - [日本語の操作マニュアル](https://miya-bee.github.io/licorice-en-downloader/)
 
