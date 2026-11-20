@@ -6,7 +6,9 @@ import tkinter as tk
 import unittest
 from unittest.mock import patch
 
+from licorice import i18n
 from licorice.gui import Application
+from licorice.i18n import tr
 from test_workflow import sample
 
 if os.name == "nt":
@@ -15,7 +17,13 @@ if os.name == "nt":
 
 
 class GuiTests(unittest.TestCase):
+    language = "ja"
+
     def setUp(self):
+        environment = patch.dict(os.environ, {"LICORICE_LANG": self.language})
+        environment.start()
+        self.addCleanup(environment.stop)
+        self.addCleanup(setattr, i18n, "_language", None)
         self.folder = tempfile.TemporaryDirectory()
         try:
             self.root = tk.Tk()
@@ -52,7 +60,7 @@ class GuiTests(unittest.TestCase):
         self.app._poll()
         self.assertIsNone(self.app.release)
         self.assertTrue(self.app.download_button.instate(["disabled"]))
-        self.assertIn("更新なし", self.app.report)
+        self.assertIn(tr("\n配布情報：更新なし"), self.app.report)
 
     def test_error_does_not_expose_output_path(self):
         self.app.events.put(("error", ("network", "通信に失敗しました。")))
@@ -122,3 +130,28 @@ class GuiTests(unittest.TestCase):
         for button in (self.app.download_button, self.app.cancel_button, self.app.settings_button):
             self.assertTrue(button.winfo_ismapped())
             self.assertLessEqual(button.winfo_rooty() - self.root.winfo_rooty() + button.winfo_height(), self.root.winfo_height())
+
+
+class EnglishGuiTests(GuiTests):
+    """Same regressions with the (longer) English labels."""
+    language = "en"
+
+    def test_english_labels_and_messages(self):
+        self.assertEqual(self.app.download_button.cget("text"), "Download BIN")
+        self.assertEqual(self.app.font, "Segoe UI")
+        self.app.events.put(("progress", (1048576, 2097152)))
+        self.root.after_cancel(self.app.poll_timer)
+        self.app._poll()
+        self.assertEqual(self.app.status_var.get(), "Downloading: 1.00 / 2.00 MiB")
+
+    def test_language_choice_is_saved(self):
+        self.app.show_settings()
+        dialog = next(w for w in self.root.winfo_children() if isinstance(w, tk.Toplevel))
+        self.app.language_box.set("日本語")
+        frame = dialog.winfo_children()[0]
+        button = next(w for w in frame.winfo_children() if w.winfo_class() == "TButton")
+        with patch("licorice.gui.messagebox.showinfo") as notice:
+            button.invoke()
+        notice.assert_called_once()
+        self.assertEqual(self.app.settings.language, "ja")
+        self.assertIn('"language": "ja"', (Path(self.folder.name) / "settings.json").read_text(encoding="utf-8"))

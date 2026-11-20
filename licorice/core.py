@@ -6,6 +6,8 @@ from datetime import datetime, timezone
 import re
 from urllib.parse import unquote, urlsplit
 
+from .i18n import tr
+
 
 class AppError(Exception):
     def __init__(self, code: str, message: str):
@@ -15,7 +17,7 @@ class AppError(Exception):
 
 class Cancelled(AppError):
     def __init__(self):
-        super().__init__("cancelled", "処理を中止しました。")
+        super().__init__("cancelled", tr("処理を中止しました。"))
 
 
 @dataclass(frozen=True)
@@ -51,7 +53,7 @@ def validate_url(url: str, host: str) -> None:
     except (ValueError, TypeError):
         valid = False
     if not valid:
-        raise AppError("source", "対応する公式HTTPS配布先ではありません。配布情報を再確認してください。")
+        raise AppError("source", tr("対応する公式HTTPS配布先ではありません。配布情報を再確認してください。"))
 
 
 @dataclass(frozen=True)
@@ -74,15 +76,15 @@ class Release:
     @classmethod
     def parse(cls, payload: object, device: Device = X4_PRO) -> Release | None:
         if not isinstance(payload, dict) or type(payload.get("code")) is not int or payload["code"] != 0:
-            raise AppError("api", "公式APIが正常な配布情報を返しませんでした。後ほど再確認してください。")
+            raise AppError("api", tr("公式APIが正常な配布情報を返しませんでした。後ほど再確認してください。"))
         if "data" not in payload:
-            raise AppError("api", "API応答に配布情報の項目がありません。")
+            raise AppError("api", tr("API応答に配布情報の項目がありません。"))
         data = payload["data"]
         if data is None:
             if str(payload.get("message", "")).lower().strip() in {
                 "no update available", "no update available."}:
                 return None
-            raise AppError("api", "配布情報が空でした。応答の意味を確認できません。")
+            raise AppError("api", tr("配布情報が空でした。応答の意味を確認できません。"))
         try:
             version = data["version"]
             if not isinstance(version, str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,47}", version):
@@ -116,6 +118,6 @@ class Release:
         except AppError:
             raise
         except (KeyError, ValueError, TypeError, AttributeError):
-            raise AppError("manifest", "X4 Pro用Licorice EN版の配布情報を検証できません。未対応の形式または情報の不一致です。") from None
+            raise AppError("manifest", tr("X4 Pro用Licorice EN版の配布情報を検証できません。未対応の形式または情報の不一致です。")) from None
         return cls(device, version, url, size, plain_size, digest.lower(), changelog,
                    uploaded, datetime.now(timezone.utc).isoformat(), ota)

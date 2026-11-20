@@ -14,6 +14,7 @@ from .core import AppError, Release
 from .firmware import extract_xota
 from .network import Client, check_cancel
 from .storage import atomic_write
+from .i18n import tr
 
 
 @dataclass(frozen=True)
@@ -53,17 +54,17 @@ def acquire(release: Release, directory: Path, options: SaveOptions,
         with tempfile.TemporaryFile(dir=directory):
             pass
     except OSError:
-        raise AppError("save", "保存先に書き込めません。別のフォルダを選んでください。") from None
+        raise AppError("save", tr("保存先に書き込めません。別のフォルダを選んでください。")) from None
     if any(path.exists() and not options.may_overwrite(path) for path in targets):
-        raise AppError("exists", "同名ファイルがあります。保存先と上書きの指定を確認してください。")
-    emit("stage", "公式配布先からダウンロードしています…")
+        raise AppError("exists", tr("同名ファイルがあります。保存先と上書きの指定を確認してください。"))
+    emit("stage", tr("公式配布先からダウンロードしています…"))
     package = (client or Client()).download(release, cancel,
                    lambda current, total: emit("progress", (current, total)))
     check_cancel(cancel)
-    emit("stage", "XOTAを復号・抽出し、BINを検証しています…")
+    emit("stage", tr("XOTAを復号・抽出し、BINを検証しています…"))
     image, verification = extract_xota(package, release)
     check_cancel(cancel)
-    emit("stage", "検証済みBINを保存しています…")
+    emit("stage", tr("検証済みBINを保存しています…"))
     # Cancellation before commit leaves the previous BIN intact. Once committed,
     # finish the optional writes and report success rather than 'cancelled'.
     atomic_write(targets[0], image, options.may_overwrite(targets[0]), cancel=cancel)
@@ -73,7 +74,7 @@ def acquire(release: Release, directory: Path, options: SaveOptions,
             path = directory / (release.stem + ".xota")
             atomic_write(path, package, options.may_overwrite(path))
         except AppError:
-            warnings.append("元のXOTAを追加保存できませんでした。BINは保存済みです。")
+            warnings.append(tr("元のXOTAを追加保存できませんでした。BINは保存済みです。"))
     if options.metadata:
         parsed = urlsplit(release.url)
         payload = {"schema_version": 1, "app": APP_NAME, "app_version": __version__,
@@ -87,5 +88,5 @@ def acquire(release: Release, directory: Path, options: SaveOptions,
             path = directory / (release.stem + ".json")
             atomic_write(path, json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8"), options.may_overwrite(path))
         except AppError:
-            warnings.append("取得情報JSONを追加保存できませんでした。BINは保存済みです。")
+            warnings.append(tr("取得情報JSONを追加保存できませんでした。BINは保存済みです。"))
     return DownloadResult(targets[0], verification, warnings)

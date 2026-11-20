@@ -1,44 +1,49 @@
 # Licorice EN Downloader
 
-XTEINK製電子書籍リーダー X4 Pro用のLicorice EN版を公式Global更新APIから取得し、Rescue OSで導入するアプリBINとして保存する、Windows用の非公式ツールです。ソースコードはMITライセンスで公開します。
+[日本語](README.ja.md) | English
 
-**現在は開発版 v0.1.1です。** 公式配布物の取得・抽出・検証・保存は確認していますが、出力BINの実機導入・起動・言語選択は未検証です。
+An unofficial Windows tool that fetches the Licorice EN firmware for the XTEINK X4 Pro e-reader from the official Global update API and saves it as the app BIN you install with Rescue OS. The source code is released under the MIT License.
 
-## ダウンロード
+**This is development build v0.1.1.** Fetching, extracting, verifying and saving the official release have been tested. Installing the produced BIN on a real device, booting it and choosing a language have not been tested yet.
 
-- [開発版 v0.1.1（Windows x64ポータブルZIP）](https://github.com/miya-bee/licorice-en-downloader/releases/download/v0.1.1/LicoriceENDownloader-v0.1.1-windows-x64-dev.zip)
+> **English UI:** the app now shows English or Japanese according to the Windows display language, and you can switch under **Settings**. This is on `main` and will ship in the next release. The v0.1.1 ZIP below still has a Japanese-only UI.
+
+## Download
+
+- [Development build v0.1.1 (Windows x64 portable ZIP)](https://github.com/miya-bee/licorice-en-downloader/releases/download/v0.1.1/LicoriceENDownloader-v0.1.1-windows-x64-dev.zip)
 - [SHA-256](https://github.com/miya-bee/licorice-en-downloader/releases/download/v0.1.1/LicoriceENDownloader-v0.1.1-windows-x64-dev.zip.sha256)
-- [配布ページ・リリース情報](https://github.com/miya-bee/licorice-en-downloader/releases)
-- [日本語の操作マニュアル](https://miya-bee.github.io/licorice-en-downloader/)
+- [Releases](https://github.com/miya-bee/licorice-en-downloader/releases)
+- [Manual (English)](https://miya-bee.github.io/licorice-en-downloader/en/)
 
-通常の利用では、上のポータブルZIPを取得してください。GitHubの「Code → Download ZIP」はソースコードです。
+For normal use, get the portable ZIP above. GitHub's “Code → Download ZIP” is the source code.
 
-## 使い方
+## Usage
 
-1. ポータブルZIPを、書き込み可能なフォルダへすべて展開します。
-2. `LicoriceENDownloader.exe` を起動します。Pythonの導入は不要です。
-3. 配布情報と保存先を確認し、「BINをダウンロード」を押します。
-4. 「ダウンロード・検証完了」を確認し、「保存先を開く」を押します。
-5. [操作マニュアル](https://miya-bee.github.io/licorice-en-downloader/)で導入方法と確認事項を確認します。
+1. Extract the whole portable ZIP to a folder you can write to.
+2. Run `LicoriceENDownloader.exe`. You don't need to install Python.
+3. Check the release info and the destination, then click **Download BIN**.
+4. When the status reads **Downloaded and verified**, click **Open folder**.
+5. Read the [manual](https://miya-bee.github.io/licorice-en-downloader/en/) for installation notes and what to check.
 
-![開発版v0.1.1の画面](docs/images/main.jpg)
+![Main window with English UI](docs/images/main-en.jpg)
 
-Rescue OSの入手先：[Rescue OS for X4 Pro — 作者Eさんの配布記事](https://note.com/ample_zephyr2723/n/necd67d1bccb3)。記事内のダウンロード欄を確認してください。準備についてはマニュアルの第5章で別に扱います。
+Where to get Rescue OS: [Rescue OS for X4 Pro, release article by its author “E” (in Japanese)](https://note.com/ample_zephyr2723/n/necd67d1bccb3). See the download section of the article. Chapter 5 of the manual covers preparation separately.
 
-画面・マニュアルは日本語のみです。配布元の更新内容は原文で表示します。端末接続・アカウント・実端末IDの入力は必要ありません。FWへのパッチや、端末への直接書き込みは行いません。
+The vendor's changelog is shown as published. You don't need to connect the device, sign in, or enter a device ID. The app does not patch the firmware or write to the device.
 
-## 機能
+## Features
 
-- X4 ProのLicorice EN版に限定した配布情報の確認。
-- XOTAの復号・抽出、サイズ・SHA-256・対象識別情報・ESPイメージの検証。
-- 検証成功後のBIN保存、同名ファイルの上書き確認、キャンセル。
-- 任意で元のXOTAと取得情報JSONを追加保存。
-- EXEと同じフォルダへの設定保存。アプリフォルダ内の保存先は相対指定。
-- 詳細・報告用情報の表示とコピー。
+- Checks release info, limited to the Licorice EN build for X4 Pro.
+- Decrypts and extracts the XOTA, and verifies size, SHA-256, target identifiers and the ESP image.
+- Saves the BIN only after verification succeeds, asks before overwriting files with the same name, and supports cancelling.
+- Optionally also saves the original XOTA and an info JSON.
+- Stores settings next to the EXE. A destination inside the app folder is stored as a relative path.
+- Shows and copies details for bug reports.
+- English and Japanese UI (Auto, 日本語, English).
 
-## 開発環境
+## Development
 
-Python 3.10以降、Tkinter、cryptographyを使用します。Windows x64 / Python 3.10.11 / Tcl/Tk 8.6.12で開発・確認しています。正式な対応Windows範囲は確認中です。
+Uses Python 3.10+, Tkinter and cryptography. Developed and tested on Windows x64 / Python 3.10.11 / Tcl/Tk 8.6.12. The officially supported range of Windows versions is still being checked.
 
 ```powershell
 git clone https://github.com/miya-bee/licorice-en-downloader.git
@@ -48,39 +53,47 @@ python -m venv .venv
 .\.venv\Scripts\python.exe main.py
 ```
 
-### テスト
+### Language
+
+The UI follows the Windows display language: Japanese on Japanese Windows, English otherwise. Change it under **Settings → 表示言語 / Language** (stored in `settings.json`, applied after restart). For the CLI or for testing, the `LICORICE_LANG` environment variable (`ja` or `en`) overrides detection.
+
+UI text lives in [`licorice/i18n.py`](licorice/i18n.py). The Japanese strings in the code are the keys and `EN` holds the English text. `tests/test_i18n.py` checks that every string has an English entry with matching placeholders.
+
+### Tests
 
 ```powershell
 python -m unittest discover -s tests -v
 ```
 
-回帰テスト46件を収録しています。ネットワークに接続せず、公式FWをフィクスチャとして同梱することもありません。GUIテストはWindowsの画面環境を使用します。GitHub ActionsでもWindows上で実行します。
+64 regression tests. They make no network connections and don't bundle official firmware as fixtures. GUI tests need a Windows desktop session and run in both Japanese and English. They also run on Windows in GitHub Actions.
 
-### 開発用CLI
+### Development CLI
 
 ```powershell
 python -m licorice.cli
 python -m licorice.cli --download .dev-validation/live --extras
 ```
 
-省略時は配布情報の照会のみです。`--download` 指定時は公式配布物を取得して検証・保存します。同名ファイルは `--overwrite` を指定した場合だけ上書きします。
+By default it only checks the release info. With `--download`, it fetches, verifies and saves the official release. Existing files are overwritten only with `--overwrite`.
 
-### Windowsポータブル版のビルド
+### Building the Windows portable version
 
 ```powershell
 python tools/build.py
 ```
 
-テスト後にPyInstallerでEXE化し、マニュアル・MITライセンス・第三者ライセンス・バグ修正記録を含むZIPと、そのSHA-256を `dist` に作成します。設定・ログ・取得済みFWは同梱しません。Windows x64版Pythonで実行してください。ビルド環境にTcl/Tkのライセンス文書が必要です。Tcl 8.6.12の文書は同じ版の公式ソース由来のものを収録しています。
+Runs the tests, builds the EXE with PyInstaller, and creates a ZIP in `dist` with the manual, MIT License, third-party licenses and bug-fix record, plus its SHA-256. Settings, logs and downloaded firmware are never included. Run it with Windows x64 Python. The build environment needs the Tcl/Tk license files. The Tcl 8.6.12 license included in the repo comes from the official source of the same version.
 
-## 文書
+## Documents
 
-- [仕様書](SPECIFICATION.md)
-- [操作マニュアル](docs/index.html)
-- [実装・検証状況](IMPLEMENTATION.md)
-- [バグ調査・修正記録](BUG_AUDIT.md)
-- [第三者表記](THIRD_PARTY_NOTICES.md)
-- [MITライセンス](LICENSE)
-- [不具合・機能・対応機種の要望](https://github.com/miya-bee/licorice-en-downloader/issues)
+Detailed design documents are in Japanese.
 
-不具合報告にはアプリの「詳細・報告用情報」を利用してください。個体バックアップや認証情報の投稿は不要です。XTEINKのFWには本アプリのMITライセンスを適用しません。
+- [Specification (Japanese)](SPECIFICATION.md)
+- [Manual (English)](docs/en/index.html) / [Manual (Japanese)](docs/index.html)
+- [Implementation and verification status (Japanese)](IMPLEMENTATION.md)
+- [Bug audit and fixes (Japanese)](BUG_AUDIT.md)
+- [Third-party notices](THIRD_PARTY_NOTICES.md)
+- [MIT License](LICENSE)
+- [Bugs, features and device requests](https://github.com/miya-bee/licorice-en-downloader/issues)
+
+When reporting a bug, please use **Details & report info** in the app. Don't post device backups or credentials. The MIT License of this app does not apply to XTEINK's firmware.

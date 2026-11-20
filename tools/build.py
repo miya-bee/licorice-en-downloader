@@ -52,7 +52,7 @@ def main():
         stage = Path(temporary) / "LicoriceENDownloader"
         stage.mkdir()
         shutil.copy2(dist / "exe" / "LicoriceENDownloader.exe", stage)
-        for name in ("はじめに.txt", "LICENSE", "THIRD_PARTY_NOTICES.md", "BUG_AUDIT.md"):
+        for name in ("はじめに.txt", "README.txt", "LICENSE", "THIRD_PARTY_NOTICES.md", "BUG_AUDIT.md"):
             shutil.copy2(BASE / name, stage)
         shutil.copytree(BASE / "docs", stage / "docs")
         shutil.copytree(BASE / "licenses", stage / "licenses")
