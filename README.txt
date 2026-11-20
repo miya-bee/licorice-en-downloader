@@ -1,4 +1,4 @@
-Licorice EN Downloader v0.2.0 (development build)
+Licorice EN Downloader v0.2.1 (development build)
 
 Extract this whole ZIP, then run LicoriceENDownloader.exe.
 You don't need to install Python. Settings are saved next to the EXE.

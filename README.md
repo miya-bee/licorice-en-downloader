@@ -4,12 +4,12 @@
 
 An unofficial Windows tool that fetches the Licorice EN firmware for the XTEINK X4 Pro e-reader from the official Global update API and saves it as the app BIN you install with Rescue OS. The source code is released under the MIT License.
 
-**This is development build v0.2.0.** Fetching, extracting, verifying and saving the official release have been tested. Installing the produced BIN on a real device, booting it and choosing a language have not been tested yet.
+**This is development build v0.2.1.** Fetching, extracting, verifying and saving the official release have been tested. Installing the produced BIN on a real device, booting it and choosing a language have not been tested yet.
 
 ## Download
 
-- [Development build v0.2.0 (Windows x64 portable ZIP)](https://github.com/miya-bee/licorice-en-downloader/releases/download/v0.2.0/LicoriceENDownloader-v0.2.0-windows-x64-dev.zip)
-- [SHA-256](https://github.com/miya-bee/licorice-en-downloader/releases/download/v0.2.0/LicoriceENDownloader-v0.2.0-windows-x64-dev.zip.sha256)
+- [Development build v0.2.1 (Windows x64 portable ZIP)](https://github.com/miya-bee/licorice-en-downloader/releases/download/v0.2.1/LicoriceENDownloader-v0.2.1-windows-x64-dev.zip)
+- [SHA-256](https://github.com/miya-bee/licorice-en-downloader/releases/download/v0.2.1/LicoriceENDownloader-v0.2.1-windows-x64-dev.zip.sha256)
 - [Releases](https://github.com/miya-bee/licorice-en-downloader/releases)
 - [Manual (English)](https://miya-bee.github.io/licorice-en-downloader/en/)
 
