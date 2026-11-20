@@ -41,6 +41,7 @@ class Application:
         self.cancel = threading.Event()
         self.worker = None
         self.startup_timers = []
+        self._wheel_delta = 0
         self.logger = logging.getLogger(f"licorice.{id(self)}")
         self.logger.setLevel(logging.INFO)
         self.logger.propagate = False
@@ -195,8 +196,15 @@ class Application:
     def _scroll_body(self, event):
         if event.widget is self.changelog:
             return
-        if self.content_canvas.yview() != (0.0, 1.0):
-            self.content_canvas.yview_scroll(-int(event.delta / 120), "units")
+        if self.content_canvas.yview() == (0.0, 1.0) or not event.delta:
+            return
+        # Precision touchpads send deltas smaller than one wheel notch (120);
+        # accumulate them so slow two-finger scrolling still moves the page.
+        self._wheel_delta += event.delta
+        steps = int(self._wheel_delta / 120)
+        if steps:
+            self._wheel_delta -= steps * 120
+            self.content_canvas.yview_scroll(-steps, "units")
 
     def _set_changelog(self, text):
         self.changelog.configure(state="normal")

@@ -122,6 +122,19 @@ class GuiTests(unittest.TestCase):
         bottom = self.app.choose_button.winfo_rooty() + self.app.choose_button.winfo_height()
         self.assertLessEqual(bottom, canvas.winfo_rooty() + canvas.winfo_height())
 
+    def test_touchpad_small_wheel_deltas_accumulate(self):
+        self.root.geometry("1000x668")
+        self.root.minsize(790, 668)
+        self.root.update()
+        canvas = self.app.content_canvas
+        self.assertLess(canvas.yview()[1], 1.0)
+        event = type("Event", (), {"widget": canvas, "delta": -30})()
+        for _ in range(3):
+            self.app._scroll_body(event)
+        self.assertEqual(canvas.yview()[0], 0.0)  # 90 of 120: not yet one notch
+        self.app._scroll_body(event)
+        self.assertGreater(canvas.yview()[0], 0.0)
+
     def test_high_dpi_and_small_screen_keep_primary_actions_accessible(self):
         self.root.tk.call("tk", "scaling", 2.6666)
         self.root.geometry("1286x668")
